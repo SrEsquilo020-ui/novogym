@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Lock, Sparkles, Dumbbell, Utensils, TrendingUp } from 'lucide-react'
+import { Sparkles, Dumbbell, Utensils, Activity, Flame, Droplet } from 'lucide-react'
 import { useEffect } from 'react'
 
 export default function Result() {
@@ -20,72 +20,88 @@ export default function Result() {
     return null
   }
 
-  // Se já é premium, redireciona para o conteúdo completo
+  // Se já é premium, redireciona para o dashboard
   if (isPremium) {
     navigate('/dashboard')
     return null
   }
 
-  const getWorkoutPreview = () => {
-    if (userData.goal === 'ganho_massa') {
+  // Cálculos
+  const heightInMeters = userData.height / 100
+  const imc = (userData.weight / (heightInMeters * heightInMeters)).toFixed(1)
+
+  // TMB (Taxa Metabólica Basal) - Fórmula Mifflin-St Jeor
+  // Para simplificar, usando uma estimativa média (normalmente precisa do sexo)
+  const tmb = Math.round(10 * userData.weight + 6.25 * userData.height - 5 * userData.age + 5)
+
+  // Proteína diária (2g por kg para ganho de massa, 1.8g para outros objetivos)
+  const proteinMultiplier = userData.goal === 'Ganhar massa muscular' ? 2 : 1.8
+  const dailyProtein = Math.round(userData.weight * proteinMultiplier)
+
+  // Creatina: 3-5g por dia (padrão)
+  const creatine = '3-5g'
+
+  // Whey: baseado na proteína diária
+  const wheyServings = Math.round(dailyProtein / 25) // 25g de proteína por dose
+  const wheyAmount = `${wheyServings} dose${wheyServings > 1 ? 's' : ''} (${wheyServings * 30}g)`
+
+  // Determinar tipo de treino baseado na preferência
+  const getWorkoutType = () => {
+    if (userData.workoutPreference !== 'Sem preferência') {
+      return userData.workoutPreference
+    }
+    // Sugestão automática
+    if (userData.frequency === '3x por semana') return 'Full Body'
+    if (userData.frequency === '4x por semana') return 'A/B'
+    if (userData.frequency === '5x por semana') return 'ABC'
+    return 'PPL'
+  }
+
+  const workoutType = getWorkoutType()
+
+  // Classificação IMC
+  const getIMCStatus = (imc: number) => {
+    if (imc < 18.5) return { label: 'Abaixo do peso', color: 'text-yellow-400' }
+    if (imc < 25) return { label: 'Peso normal', color: 'text-green-400' }
+    if (imc < 30) return { label: 'Sobrepeso', color: 'text-orange-400' }
+    return { label: 'Obesidade', color: 'text-red-400' }
+  }
+
+  const imcStatus = getIMCStatus(parseFloat(imc))
+
+  // Plano alimentar baseado no objetivo
+  const getDietSummary = () => {
+    if (userData.goal === 'Perder gordura') {
       return {
-        type: 'Push/Pull/Legs',
-        description: 'Treino focado em hipertrofia e ganho de massa muscular',
-        exercises: ['Supino Reto', 'Desenvolvimento', 'Tríceps Testa'],
-        image: '🏋️'
+        calories: `${tmb - 500} kcal`,
+        description: 'Déficit calórico para perda de gordura sustentável',
+        meals: '5-6 refeições pequenas ao longo do dia'
       }
-    } else if (userData.goal === 'emagrecimento') {
+    } else if (userData.goal === 'Ganhar massa muscular') {
       return {
-        type: 'Treino Metabólico',
-        description: 'Treino de alta intensidade para queima de gordura',
-        exercises: ['Circuito HIIT', 'Agachamento Jump', 'Burpees'],
-        image: '🔥'
+        calories: `${tmb + 500} kcal`,
+        description: 'Superávit calórico para ganho de massa muscular',
+        meals: '5-6 refeições com foco em proteínas'
       }
-    } else if (userData.goal === 'definicao') {
+    } else if (userData.goal === 'Definição muscular') {
       return {
-        type: 'Treino de Definição',
-        description: 'Combinação de musculação e cardio para definir',
-        exercises: ['Supino Inclinado', 'Rosca Direta', 'Cardio Intervalado'],
-        image: '💪'
+        calories: `${tmb - 300} kcal`,
+        description: 'Déficit leve para definição mantendo massa muscular',
+        meals: '5-6 refeições balanceadas'
       }
     } else {
       return {
-        type: 'Treino Funcional',
-        description: 'Treino para condicionamento físico geral',
-        exercises: ['Agachamento', 'Flexões', 'Prancha'],
-        image: '⚡'
+        calories: `${tmb} kcal`,
+        description: 'Manutenção calórica para seus objetivos',
+        meals: '4-5 refeições balanceadas'
       }
     }
   }
 
-  const workout = getWorkoutPreview()
-
-  const getDietPreview = () => {
-    if (userData.goal === 'ganho_massa') {
-      return {
-        calories: '3000-3500',
-        protein: '150-180g',
-        meals: ['Café da manhã rico em proteína', 'Almoço com carboidratos', 'Jantar balanceado']
-      }
-    } else if (userData.goal === 'emagrecimento') {
-      return {
-        calories: '1800-2200',
-        protein: '120-150g',
-        meals: ['Café leve e nutritivo', 'Almoço com vegetais', 'Jantar leve']
-      }
-    } else {
-      return {
-        calories: '2200-2500',
-        protein: '130-160g',
-        meals: ['Café completo', 'Almoço balanceado', 'Jantar moderado']
-      }
-    }
-  }
-
-  const diet = getDietPreview()
+  const diet = getDietSummary()
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
+    <div className="max-w-5xl mx-auto space-y-8">
       {/* Header */}
       <div className="text-center space-y-4">
         <div className="flex justify-center">
@@ -94,183 +110,193 @@ export default function Result() {
           </div>
         </div>
         <h1 className="text-4xl font-bold text-white">
-          Olá, {userData.name}! 👋
+          Perfeito, {userData.name}! 🎉
         </h1>
         <p className="text-xl text-slate-300">
-          Seu treino personalizado está pronto!
+          Seu plano personalizado está pronto. Veja o resumo:
         </p>
       </div>
 
-      {/* User Info */}
-      <Card className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 border-slate-800">
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center">
-              <p className="text-slate-400 text-sm">Objetivo</p>
-              <p className="text-white font-semibold capitalize">{userData.goal.replace('_', ' ')}</p>
-            </div>
-            <div className="text-center">
-              <p className="text-slate-400 text-sm">Nível</p>
-              <p className="text-white font-semibold capitalize">{userData.level}</p>
-            </div>
-            <div className="text-center">
-              <p className="text-slate-400 text-sm">Frequência</p>
-              <p className="text-white font-semibold">{userData.frequency}x/semana</p>
-            </div>
-            <div className="text-center">
-              <p className="text-slate-400 text-sm">Sexo</p>
-              <p className="text-white font-semibold capitalize">{userData.gender}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Métricas de Saúde */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="bg-gradient-to-br from-blue-900/50 to-slate-900/50 border-blue-800">
+          <CardContent className="pt-6 text-center">
+            <Activity className="h-8 w-8 text-blue-500 mx-auto mb-2" />
+            <p className="text-slate-400 text-sm">Seu IMC</p>
+            <p className="text-3xl font-bold text-white mt-1">{imc}</p>
+            <p className={`text-sm mt-1 ${imcStatus.color}`}>{imcStatus.label}</p>
+          </CardContent>
+        </Card>
 
-      {/* Workout Preview */}
-      <Card className="bg-slate-900/50 border-slate-800 relative overflow-hidden">
-        <div className="absolute top-4 right-4">
-          <Badge className="bg-yellow-600 text-white">
-            <Lock className="h-3 w-3 mr-1" />
-            Prévia
-          </Badge>
-        </div>
+        <Card className="bg-gradient-to-br from-orange-900/50 to-slate-900/50 border-orange-800">
+          <CardContent className="pt-6 text-center">
+            <Flame className="h-8 w-8 text-orange-500 mx-auto mb-2" />
+            <p className="text-slate-400 text-sm">Taxa Metabólica Basal</p>
+            <p className="text-3xl font-bold text-white mt-1">{tmb}</p>
+            <p className="text-slate-300 text-sm mt-1">kcal/dia</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-green-900/50 to-slate-900/50 border-green-800">
+          <CardContent className="pt-6 text-center">
+            <Droplet className="h-8 w-8 text-green-500 mx-auto mb-2" />
+            <p className="text-slate-400 text-sm">Proteína Diária</p>
+            <p className="text-3xl font-bold text-white mt-1">{dailyProtein}g</p>
+            <p className="text-slate-300 text-sm mt-1">por dia</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Plano de Treino */}
+      <Card className="bg-slate-900/50 border-slate-800">
         <CardHeader>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="text-4xl">{workout.image}</div>
-            <div>
-              <CardTitle className="text-2xl text-white">{workout.type}</CardTitle>
-              <p className="text-slate-400 text-sm mt-1">{workout.description}</p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Dumbbell className="h-8 w-8 text-blue-500" />
+              <div>
+                <CardTitle className="text-2xl text-white">Seu Treino: {workoutType}</CardTitle>
+                <p className="text-slate-400 text-sm mt-1">{userData.frequency} • Nível {userData.level}</p>
+              </div>
             </div>
+            <Badge className="bg-blue-600">Personalizado</Badge>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 mb-3">
-              <Dumbbell className="h-5 w-5 text-blue-500" />
-              <p className="text-white font-semibold">Exercícios inclusos:</p>
+          <div className="bg-slate-800/50 rounded-lg p-6 space-y-3">
+            <h3 className="text-white font-semibold text-lg">Exemplo de Exercícios:</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {['Supino Reto', 'Agachamento Livre', 'Remada Curvada', 'Desenvolvimento', 'Rosca Direta', 'Leg Press'].map((ex, i) => (
+                <div key={i} className="flex items-center gap-2 text-slate-300">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                  <span>{ex}</span>
+                </div>
+              ))}
             </div>
-            {workout.exercises.map((exercise, index) => (
-              <div key={index} className="flex items-center gap-2 p-3 bg-slate-800/50 rounded-lg">
-                <span className="text-blue-500">•</span>
-                <span className="text-white">{exercise}</span>
-              </div>
-            ))}
           </div>
 
-          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 space-y-2 backdrop-blur-sm relative">
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-slate-900/90 flex items-center justify-center">
-              <div className="text-center space-y-2">
-                <Lock className="h-8 w-8 text-slate-400 mx-auto" />
-                <p className="text-slate-300 font-semibold">Conteúdo Bloqueado</p>
-              </div>
+          <div className="bg-gradient-to-r from-slate-800/50 to-slate-800/30 rounded-lg p-6 backdrop-blur-sm border border-slate-700 relative">
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-slate-900/90 rounded-lg flex items-center justify-center">
+              <p className="text-white font-semibold text-lg">🔒 Séries, repetições e técnicas completas no plano premium</p>
             </div>
-            <p className="text-slate-500 blur-sm">• Séries e repetições detalhadas</p>
-            <p className="text-slate-500 blur-sm">• Tempo de descanso</p>
-            <p className="text-slate-500 blur-sm">• Técnicas de execução</p>
-            <p className="text-slate-500 blur-sm">• Vídeos demonstrativos</p>
-            <p className="text-slate-500 blur-sm">• Progressão de carga</p>
+            <div className="blur-sm space-y-2 select-none">
+              <p className="text-slate-400">• Séries: 4x8-12</p>
+              <p className="text-slate-400">• Descanso: 60-90s</p>
+              <p className="text-slate-400">• Técnicas avançadas de execução</p>
+              <p className="text-slate-400">• Progressão de carga semanal</p>
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Diet Preview */}
-      <Card className="bg-slate-900/50 border-slate-800 relative overflow-hidden">
-        <div className="absolute top-4 right-4">
-          <Badge className="bg-yellow-600 text-white">
-            <Lock className="h-3 w-3 mr-1" />
-            Prévia
-          </Badge>
-        </div>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <Utensils className="h-8 w-8 text-green-500" />
-            <CardTitle className="text-2xl text-white">Plano Alimentar</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="p-3 bg-slate-800/50 rounded-lg">
-              <p className="text-slate-400 text-sm">Calorias diárias</p>
-              <p className="text-white font-semibold text-lg">{diet.calories}</p>
-            </div>
-            <div className="p-3 bg-slate-800/50 rounded-lg">
-              <p className="text-slate-400 text-sm">Proteína</p>
-              <p className="text-white font-semibold text-lg">{diet.protein}</p>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <p className="text-white font-semibold">Refeições incluídas:</p>
-            {diet.meals.map((meal, index) => (
-              <div key={index} className="flex items-center gap-2 p-3 bg-slate-800/50 rounded-lg">
-                <span className="text-green-500">•</span>
-                <span className="text-white">{meal}</span>
-              </div>
-            ))}
-          </div>
-
-          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 space-y-2 backdrop-blur-sm relative">
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-slate-900/90 flex items-center justify-center">
-              <div className="text-center space-y-2">
-                <Lock className="h-8 w-8 text-slate-400 mx-auto" />
-                <p className="text-slate-300 font-semibold">Conteúdo Bloqueado</p>
-              </div>
-            </div>
-            <p className="text-slate-500 blur-sm">• Receitas completas</p>
-            <p className="text-slate-500 blur-sm">• Lista de compras</p>
-            <p className="text-slate-500 blur-sm">• Horários das refeições</p>
-            <p className="text-slate-500 blur-sm">• Opções de substituição</p>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Features Preview */}
+      {/* Plano Alimentar */}
       <Card className="bg-slate-900/50 border-slate-800">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <TrendingUp className="h-8 w-8 text-purple-500" />
-            <CardTitle className="text-2xl text-white">Também Incluído</CardTitle>
+            <Utensils className="h-8 w-8 text-green-500" />
+            <div>
+              <CardTitle className="text-2xl text-white">Plano Alimentar</CardTitle>
+              <p className="text-slate-400 text-sm mt-1">{diet.description}</p>
+            </div>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 bg-slate-800/50 rounded-lg space-y-2">
-              <p className="text-white font-semibold">📊 Acompanhamento de Progresso</p>
-              <p className="text-slate-400 text-sm">Registre seus treinos e evolução</p>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="bg-slate-800/50 rounded-lg p-4">
+              <p className="text-slate-400 text-sm">Calorias Alvo</p>
+              <p className="text-2xl font-bold text-white">{diet.calories}</p>
             </div>
-            <div className="p-4 bg-slate-800/50 rounded-lg space-y-2">
-              <p className="text-white font-semibold">💊 Calculadora de Suplementos</p>
-              <p className="text-slate-400 text-sm">Whey, Creatina e muito mais</p>
+            <div className="bg-slate-800/50 rounded-lg p-4">
+              <p className="text-slate-400 text-sm">Proteínas</p>
+              <p className="text-2xl font-bold text-white">{dailyProtein}g</p>
             </div>
-            <div className="p-4 bg-slate-800/50 rounded-lg space-y-2">
-              <p className="text-white font-semibold">🎥 Vídeos Demonstrativos</p>
-              <p className="text-slate-400 text-sm">Aprenda a execução correta</p>
+            <div className="bg-slate-800/50 rounded-lg p-4">
+              <p className="text-slate-400 text-sm">Refeições</p>
+              <p className="text-lg font-bold text-white">{diet.meals}</p>
             </div>
-            <div className="p-4 bg-slate-800/50 rounded-lg space-y-2">
-              <p className="text-white font-semibold">📱 Suporte Exclusivo</p>
-              <p className="text-slate-400 text-sm">Tire dúvidas com especialistas</p>
+          </div>
+
+          <div className="bg-gradient-to-r from-slate-800/50 to-slate-800/30 rounded-lg p-6 backdrop-blur-sm border border-slate-700 relative">
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-slate-900/90 rounded-lg flex items-center justify-center">
+              <p className="text-white font-semibold text-lg">🔒 Cardápio completo com receitas no plano premium</p>
+            </div>
+            <div className="blur-sm space-y-2 select-none">
+              <p className="text-slate-400">• Café da manhã: Ovos e aveia</p>
+              <p className="text-slate-400">• Almoço: Frango com batata doce</p>
+              <p className="text-slate-400">• Jantar: Peixe com legumes</p>
+              <p className="text-slate-400">• Lanches: Frutas e castanhas</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* CTA Button */}
-      <Card className="bg-gradient-to-r from-blue-600 to-purple-600 border-0">
-        <CardContent className="pt-6 text-center space-y-4">
-          <h2 className="text-2xl font-bold text-white">
-            Desbloqueie Seu Treino Completo Agora!
-          </h2>
-          <p className="text-blue-100">
-            Acesse treinos detalhados, planos alimentares completos e muito mais
-          </p>
+      {/* Suplementação */}
+      <Card className="bg-slate-900/50 border-slate-800">
+        <CardHeader>
+          <CardTitle className="text-2xl text-white flex items-center gap-2">
+            💊 Suplementação Recomendada
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {userData.supplements.includes('Whey Protein') && (
+              <div className="bg-slate-800/50 rounded-lg p-5">
+                <h3 className="text-white font-semibold mb-2">Whey Protein</h3>
+                <p className="text-slate-300 text-lg font-bold">{wheyAmount}</p>
+                <p className="text-slate-400 text-sm mt-1">Divididas ao longo do dia</p>
+              </div>
+            )}
+
+            {userData.supplements.includes('Creatina') && (
+              <div className="bg-slate-800/50 rounded-lg p-5">
+                <h3 className="text-white font-semibold mb-2">Creatina</h3>
+                <p className="text-slate-300 text-lg font-bold">{creatine}</p>
+                <p className="text-slate-400 text-sm mt-1">Diariamente, qualquer horário</p>
+              </div>
+            )}
+
+            {userData.supplements.includes('Pré-treino') && (
+              <div className="bg-slate-800/50 rounded-lg p-5">
+                <h3 className="text-white font-semibold mb-2">Pré-treino</h3>
+                <p className="text-slate-300 text-lg font-bold">1 dose</p>
+                <p className="text-slate-400 text-sm mt-1">30 min antes do treino</p>
+              </div>
+            )}
+
+            {userData.supplements.includes('Nenhum') && (
+              <div className="bg-slate-800/50 rounded-lg p-5 md:col-span-2">
+                <h3 className="text-white font-semibold mb-2">Sugestão de Início</h3>
+                <p className="text-slate-300">Recomendamos começar com <strong>Whey Protein</strong> e <strong>Creatina</strong> para melhores resultados.</p>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* CTA Final */}
+      <Card className="bg-gradient-to-r from-blue-600 to-purple-600 border-0 shadow-2xl">
+        <CardContent className="pt-8 pb-8 text-center space-y-6">
+          <div className="space-y-3">
+            <h2 className="text-3xl font-bold text-white">
+              Desbloqueie Seu Plano Completo Agora!
+            </h2>
+            <p className="text-xl text-blue-50">
+              ✓ Treinos detalhados dia a dia<br />
+              ✓ Cardápio completo com receitas<br />
+              ✓ Planilhas de acompanhamento<br />
+              ✓ Suporte especializado
+            </p>
+          </div>
+
           <Button
             size="lg"
             onClick={() => navigate('/planos')}
-            className="bg-white text-blue-600 hover:bg-slate-100 text-lg px-8 py-6 font-bold"
+            className="bg-white text-blue-600 hover:bg-slate-100 text-xl px-12 py-8 font-bold shadow-xl"
           >
-            Ver Planos e Desbloquear
+            Ver Treino Completo
           </Button>
-          <p className="text-blue-100 text-sm">
-            ⚡ Oferta especial: Primeiro mês com desconto
+
+          <p className="text-blue-50 text-sm">
+            ⚡ Mais de 5.000 alunos já transformaram seus corpos
           </p>
         </CardContent>
       </Card>

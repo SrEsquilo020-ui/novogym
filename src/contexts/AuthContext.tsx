@@ -2,10 +2,14 @@ import { createContext, useContext, useState, ReactNode, useEffect } from 'react
 
 interface UserData {
   name: string
+  age: number
+  weight: number
+  height: number
   goal: string
-  level: string
   frequency: string
-  gender: string
+  level: string
+  workoutPreference: string
+  supplements: string[]
 }
 
 interface AuthContextType {

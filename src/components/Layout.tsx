@@ -14,12 +14,6 @@ export default function Layout({ children }: LayoutProps) {
   const navigate = useNavigate()
   const { isPremium, resetUserData } = useAuth()
 
-  // Navegação pública (sem login)
-  const publicNavItems = [
-    { path: '/', label: 'Início', icon: Home },
-    { path: '/planos', label: 'Planos', icon: Crown }
-  ]
-
   // Navegação premium (apenas para quem pagou)
   const premiumNavItems = [
     { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -27,8 +21,6 @@ export default function Layout({ children }: LayoutProps) {
     { path: '/nutrition', label: 'Nutrição', icon: Flame },
     { path: '/progress', label: 'Progresso', icon: TrendingUp }
   ]
-
-  const navItems = isPremium ? premiumNavItems : publicNavItems
 
   const handleLogout = () => {
     resetUserData()
@@ -67,33 +59,35 @@ export default function Layout({ children }: LayoutProps) {
         </div>
       </header>
 
-      {/* Navigation */}
-      <nav className="border-b border-slate-800 bg-slate-900/30 backdrop-blur-sm sticky top-[73px] z-40">
-        <div className="container mx-auto px-4">
-          <div className="flex gap-1 overflow-x-auto scrollbar-hide py-2">
-            {navItems.map((item) => {
-              const Icon = item.icon
-              const isActive = location.pathname === item.path
+      {/* Navigation - Apenas para Premium */}
+      {isPremium && (
+        <nav className="border-b border-slate-800 bg-slate-900/30 backdrop-blur-sm sticky top-[73px] z-40">
+          <div className="container mx-auto px-4">
+            <div className="flex gap-1 overflow-x-auto scrollbar-hide py-2">
+              {premiumNavItems.map((item) => {
+                const Icon = item.icon
+                const isActive = location.pathname === item.path
 
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={cn(
-                    "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap",
-                    isActive
-                      ? "bg-blue-600 text-white"
-                      : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                  {item.label}
-                </Link>
-              )
-            })}
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap",
+                      isActive
+                        ? "bg-blue-600 text-white"
+                        : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                    )}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {item.label}
+                  </Link>
+                )
+              })}
+            </div>
           </div>
-        </div>
-      </nav>
+        </nav>
+      )}
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
