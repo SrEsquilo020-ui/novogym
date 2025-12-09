@@ -1,7 +1,9 @@
 import { ReactNode } from 'react'
-import { Link, useLocation } from 'react-router-dom'
-import { Dumbbell, Target, Flame, Pill, TrendingUp, Crown, Home } from 'lucide-react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Dumbbell, LayoutDashboard, Flame, TrendingUp, Crown, Home, LogOut } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/contexts/AuthContext'
+import { Button } from '@/components/ui/button'
 
 interface LayoutProps {
   children: ReactNode
@@ -9,27 +11,59 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   const location = useLocation()
+  const navigate = useNavigate()
+  const { isPremium, resetUserData } = useAuth()
 
-  const navItems = [
+  // Navegação pública (sem login)
+  const publicNavItems = [
     { path: '/', label: 'Início', icon: Home },
-    { path: '/goals', label: 'Objetivos', icon: Target },
+    { path: '/planos', label: 'Planos', icon: Crown }
+  ]
+
+  // Navegação premium (apenas para quem pagou)
+  const premiumNavItems = [
+    { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/workouts', label: 'Treinos', icon: Dumbbell },
     { path: '/nutrition', label: 'Nutrição', icon: Flame },
-    { path: '/creatine', label: 'Creatina', icon: Pill },
-    { path: '/whey', label: 'Whey', icon: Pill },
-    { path: '/progress', label: 'Progresso', icon: TrendingUp },
-    { path: '/premium', label: 'Premium', icon: Crown }
+    { path: '/progress', label: 'Progresso', icon: TrendingUp }
   ]
+
+  const navItems = isPremium ? premiumNavItems : publicNavItems
+
+  const handleLogout = () => {
+    resetUserData()
+    navigate('/')
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900">
       {/* Header */}
       <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
-          <Link to="/" className="flex items-center gap-2">
-            <Dumbbell className="h-8 w-8 text-blue-500" />
-            <span className="text-2xl font-bold text-white">GymFocus</span>
-          </Link>
+          <div className="flex items-center justify-between">
+            <Link to="/" className="flex items-center gap-2">
+              <Dumbbell className="h-8 w-8 text-blue-500" />
+              <span className="text-2xl font-bold text-white">GymFocus</span>
+            </Link>
+
+            {isPremium && (
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-yellow-600 to-orange-600 rounded-full">
+                  <Crown className="h-4 w-4 text-white" />
+                  <span className="text-white text-sm font-semibold">Premium</span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleLogout}
+                  className="text-slate-400 hover:text-white"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sair
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
@@ -80,7 +114,7 @@ export default function Layout({ children }: LayoutProps) {
               <h3 className="text-lg font-semibold text-white mb-3">Links</h3>
               <ul className="space-y-2 text-sm">
                 <li><Link to="/" className="text-slate-400 hover:text-blue-400">Início</Link></li>
-                <li><Link to="/premium" className="text-slate-400 hover:text-blue-400">Premium</Link></li>
+                <li><Link to="/planos" className="text-slate-400 hover:text-blue-400">Planos</Link></li>
                 <li><a href="#" className="text-slate-400 hover:text-blue-400">Privacidade</a></li>
               </ul>
             </div>

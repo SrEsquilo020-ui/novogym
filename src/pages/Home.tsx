@@ -1,9 +1,20 @@
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Dumbbell, Target, Calculator, TrendingUp, Zap, Users } from 'lucide-react'
+import { Dumbbell, Target, Calculator, TrendingUp, Zap, Crown } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
+import { useEffect } from 'react'
 
 export default function Home() {
+  const navigate = useNavigate()
+  const { isPremium } = useAuth()
+
+  // Se já é premium, vai pro dashboard
+  useEffect(() => {
+    if (isPremium) {
+      navigate('/dashboard')
+    }
+  }, [isPremium, navigate])
   const features = [
     {
       icon: Dumbbell,
@@ -46,18 +57,24 @@ export default function Home() {
         </p>
 
         <div className="flex gap-4 justify-center pt-4">
-          <Link to="/goals">
-            <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-lg px-8 py-6">
-              <Zap className="mr-2 h-5 w-5" />
-              Começar Agora
-            </Button>
-          </Link>
+          <Button
+            size="lg"
+            onClick={() => navigate('/funil')}
+            className="bg-blue-600 hover:bg-blue-700 text-lg px-8 py-6"
+          >
+            <Zap className="mr-2 h-5 w-5" />
+            Começar Agora
+          </Button>
 
-          <Link to="/premium">
-            <Button size="lg" variant="outline" className="text-lg px-8 py-6 border-slate-600 text-white hover:bg-slate-800">
-              Ver Premium
-            </Button>
-          </Link>
+          <Button
+            size="lg"
+            variant="outline"
+            onClick={() => navigate('/planos')}
+            className="text-lg px-8 py-6 border-slate-600 text-white hover:bg-slate-800"
+          >
+            <Crown className="mr-2 h-5 w-5" />
+            Ver Planos
+          </Button>
         </div>
       </section>
 
@@ -87,57 +104,60 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Quick Access */}
+      {/* Como Funciona */}
       <section className="space-y-6">
-        <h2 className="text-3xl font-bold text-center text-white">Acesso Rápido</h2>
+        <h2 className="text-3xl font-bold text-center text-white">Como Funciona</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Link to="/workouts">
-            <Card className="bg-gradient-to-br from-blue-900/50 to-slate-900/50 border-slate-800 hover:border-blue-600 transition-all hover:scale-105 cursor-pointer">
-              <CardContent className="pt-6 text-center space-y-3">
-                <Dumbbell className="h-12 w-12 text-blue-500 mx-auto" />
-                <h3 className="text-2xl font-bold text-white">Treinos</h3>
-                <p className="text-slate-300">Encontre o treino ideal para você</p>
-              </CardContent>
-            </Card>
-          </Link>
+          <Card className="bg-gradient-to-br from-blue-900/50 to-slate-900/50 border-slate-800">
+            <CardContent className="pt-6 text-center space-y-3">
+              <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mx-auto text-white font-bold text-xl">
+                1
+              </div>
+              <h3 className="text-2xl font-bold text-white">Responda o Funil</h3>
+              <p className="text-slate-300">Conte-nos seus objetivos e preferências</p>
+            </CardContent>
+          </Card>
 
-          <Link to="/nutrition">
-            <Card className="bg-gradient-to-br from-green-900/50 to-slate-900/50 border-slate-800 hover:border-green-600 transition-all hover:scale-105 cursor-pointer">
-              <CardContent className="pt-6 text-center space-y-3">
-                <Calculator className="h-12 w-12 text-green-500 mx-auto" />
-                <h3 className="text-2xl font-bold text-white">Nutrição</h3>
-                <p className="text-slate-300">Calcule suas calorias e proteínas</p>
-              </CardContent>
-            </Card>
-          </Link>
+          <Card className="bg-gradient-to-br from-green-900/50 to-slate-900/50 border-slate-800">
+            <CardContent className="pt-6 text-center space-y-3">
+              <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center mx-auto text-white font-bold text-xl">
+                2
+              </div>
+              <h3 className="text-2xl font-bold text-white">Veja a Prévia</h3>
+              <p className="text-slate-300">Receba uma amostra do seu treino personalizado</p>
+            </CardContent>
+          </Card>
 
-          <Link to="/progress">
-            <Card className="bg-gradient-to-br from-purple-900/50 to-slate-900/50 border-slate-800 hover:border-purple-600 transition-all hover:scale-105 cursor-pointer">
-              <CardContent className="pt-6 text-center space-y-3">
-                <TrendingUp className="h-12 w-12 text-purple-500 mx-auto" />
-                <h3 className="text-2xl font-bold text-white">Progresso</h3>
-                <p className="text-slate-300">Acompanhe sua evolução</p>
-              </CardContent>
-            </Card>
-          </Link>
+          <Card className="bg-gradient-to-br from-purple-900/50 to-slate-900/50 border-slate-800">
+            <CardContent className="pt-6 text-center space-y-3">
+              <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center mx-auto text-white font-bold text-xl">
+                3
+              </div>
+              <h3 className="text-2xl font-bold text-white">Desbloqueie Tudo</h3>
+              <p className="text-slate-300">Assine e tenha acesso completo</p>
+            </CardContent>
+          </Card>
         </div>
       </section>
 
       {/* CTA Section */}
       <section className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 rounded-xl p-12 text-center space-y-6 border border-slate-800">
-        <Users className="h-16 w-16 text-blue-500 mx-auto" />
+        <Target className="h-16 w-16 text-blue-500 mx-auto" />
         <h2 className="text-3xl font-bold text-white">
           Pronto para transformar seu corpo?
         </h2>
         <p className="text-xl text-slate-300 max-w-2xl mx-auto">
-          Junte-se a milhares de pessoas que já alcançaram seus objetivos com o GymFocus
+          Crie seu treino personalizado em menos de 2 minutos
         </p>
-        <Link to="/goals">
-          <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-lg px-8 py-6">
-            Começar Minha Jornada
-          </Button>
-        </Link>
+        <Button
+          size="lg"
+          onClick={() => navigate('/funil')}
+          className="bg-blue-600 hover:bg-blue-700 text-lg px-8 py-6"
+        >
+          <Zap className="mr-2 h-5 w-5" />
+          Começar Agora Grátis
+        </Button>
       </section>
     </div>
   )

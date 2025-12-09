@@ -1,9 +1,33 @@
+import { useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Crown, Check, Sparkles, Zap, TrendingUp, Users, Lock } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
+import { useToast } from '@/hooks/use-toast'
 
 export default function Premium() {
+  const navigate = useNavigate()
+  const { activatePremium, isPremium } = useAuth()
+  const { toast } = useToast()
+
+  const handleSubscribe = () => {
+    // Simulação de pagamento - aqui você integraria com Stripe, Mercado Pago, etc
+    toast({
+      title: "Processando pagamento...",
+      description: "Aguarde um momento"
+    })
+
+    // Simular processamento
+    setTimeout(() => {
+      activatePremium()
+      toast({
+        title: "Bem-vindo ao Premium! 🎉",
+        description: "Seu acesso completo foi liberado!"
+      })
+      navigate('/dashboard')
+    }, 2000)
+  }
   const features = [
     {
       icon: Sparkles,
@@ -27,28 +51,19 @@ export default function Premium() {
     }
   ]
 
-  const freeFeatures = [
-    'Treinos básicos (Fullbody, ABC, PPL)',
-    'Calculadora de calorias',
-    'Calculadora de proteínas',
-    'Calculadora de creatina',
-    'Calculadora de whey',
-    'Acompanhamento de progresso'
-  ]
-
   const premiumFeatures = [
-    'Tudo do plano gratuito',
-    'Treinos personalizados',
+    'Treinos 100% personalizados para seu objetivo',
+    'Exercícios detalhados com séries e repetições',
+    'Vídeos demonstrativos dos exercícios',
+    'Plano alimentar completo e personalizado',
+    'Receitas saudáveis e práticas',
+    'Calculadora de suplementos (Whey, Creatina)',
+    'Acompanhamento de progresso com gráficos',
     'Ajustes automáticos de treino',
-    'Cardápio semanal personalizado',
-    'Receitas saudáveis',
     'Suporte de personal trainer',
-    'Análise avançada de progresso',
-    'Gráficos de evolução',
-    'Notificações de treino',
     'Programa de periodização',
-    'Acesso prioritário a novos recursos',
-    'Sem anúncios'
+    'Notificações de treino',
+    'Acesso prioritário a novos recursos'
   ]
 
   return (
@@ -71,55 +86,29 @@ export default function Premium() {
         </p>
       </div>
 
-      {/* Comparação de Planos */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12">
-        {/* Plano Gratuito */}
-        <Card className="bg-slate-900/50 border-slate-800">
-          <CardHeader>
-            <CardTitle className="text-2xl text-white">Gratuito</CardTitle>
-            <CardDescription>Acesso básico ao GymFocus</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="text-center py-6">
-              <p className="text-5xl font-bold text-white">R$ 0</p>
-              <p className="text-slate-400 mt-2">Para sempre</p>
-            </div>
-
-            <div className="space-y-3">
-              {freeFeatures.map((feature, index) => (
-                <div key={index} className="flex items-start gap-3">
-                  <Check className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                  <span className="text-slate-300">{feature}</span>
-                </div>
-              ))}
-            </div>
-
-            <Button variant="outline" className="w-full" disabled>
-              Plano Atual
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Plano Premium */}
+      {/* Plano Premium - Centralizado */}
+      <div className="max-w-2xl mx-auto mt-12">
         <Card className="bg-gradient-to-br from-yellow-900/30 to-orange-900/30 border-yellow-600 relative overflow-hidden">
           <div className="absolute top-0 right-0 bg-gradient-to-r from-yellow-600 to-orange-600 text-white px-4 py-1 text-sm font-semibold">
-            MAIS POPULAR
+            OFERTA ESPECIAL
           </div>
 
           <CardHeader className="pt-8">
-            <CardTitle className="text-2xl text-white flex items-center gap-2">
-              <Crown className="h-6 w-6 text-yellow-500" />
-              Premium
+            <CardTitle className="text-3xl text-white flex items-center gap-2 justify-center">
+              <Crown className="h-8 w-8 text-yellow-500" />
+              GymFocus Premium
             </CardTitle>
-            <CardDescription>Transformação completa</CardDescription>
+            <CardDescription className="text-center text-lg">Transformação completa garantida</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="text-center py-6 bg-slate-900/30 rounded-lg">
+              <p className="text-slate-400 line-through text-xl">R$ 49,90</p>
               <p className="text-5xl font-bold text-white">R$ 29,90</p>
               <p className="text-slate-400 mt-2">por mês</p>
+              <Badge className="mt-3 bg-green-600">40% de desconto</Badge>
             </div>
 
-            <div className="space-y-3 max-h-80 overflow-y-auto">
+            <div className="space-y-3">
               {premiumFeatures.map((feature, index) => (
                 <div key={index} className="flex items-start gap-3">
                   <Check className="h-5 w-5 text-yellow-500 mt-0.5 flex-shrink-0" />
@@ -128,13 +117,19 @@ export default function Premium() {
               ))}
             </div>
 
-            <Button className="w-full bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white text-lg py-6">
+            <Button
+              onClick={handleSubscribe}
+              disabled={isPremium}
+              className="w-full bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white text-lg py-6"
+            >
               <Crown className="mr-2 h-5 w-5" />
-              Assinar Premium
+              {isPremium ? 'Você já é Premium!' : 'Assinar Premium Agora'}
             </Button>
 
             <p className="text-center text-xs text-slate-400">
-              Cancele quando quiser, sem multas
+              ✓ Cancele quando quiser, sem multas<br />
+              ✓ Acesso imediato após o pagamento<br />
+              ✓ Garantia de 7 dias ou seu dinheiro de volta
             </p>
           </CardContent>
         </Card>
@@ -258,9 +253,13 @@ export default function Premium() {
           <p className="text-xl text-slate-300 max-w-2xl mx-auto">
             Junte-se a milhares de pessoas que já alcançaram resultados incríveis com o GymFocus Premium
           </p>
-          <Button className="bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white text-lg px-12 py-6">
+          <Button
+            onClick={handleSubscribe}
+            disabled={isPremium}
+            className="bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white text-lg px-12 py-6"
+          >
             <Crown className="mr-2 h-5 w-5" />
-            Começar Agora
+            {isPremium ? 'Você já é Premium!' : 'Começar Agora'}
           </Button>
           <p className="text-sm text-slate-400">
             Satisfação garantida ou seu dinheiro de volta em 7 dias
